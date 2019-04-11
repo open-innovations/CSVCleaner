@@ -281,7 +281,7 @@ S(document).ready(function(){
 		}, false);
 
 		S('#step2').css({'display':'none'});
-		S('#step1 p').append(' Try loading <a href="#" id="example">Leeds City Council Business Rates data</a> from Data Mill North.');
+		S('#step1').append('<p><button id="example" class="c14-bg">Load example</button> (<a href="https://datamillnorth.org/dataset/business-rates">14/01/2019   Leeds City Council Business Rates data from Data Mill North</a>)</p>');
 		S('#example').on('click',{me:this},function(e){
 			e.preventDefault();
 			e.data.me.loadExample();

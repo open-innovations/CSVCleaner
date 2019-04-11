@@ -281,9 +281,26 @@ S(document).ready(function(){
 		}, false);
 
 		S('#step2').css({'display':'none'});
+		S('#step1 p').append(' Try loading <a href="#" id="example">Leeds City Council Business Rates data</a> from Data Mill North.');
+		S('#example').on('click',{me:this},function(e){
+			e.preventDefault();
+			e.data.me.loadExample();
+		});
 
 		return this;
 	}
+
+	CSVCleaner.prototype.loadExample = function(){
+		file = "https://datamillnorth.org/download/business-rates/8822678c-f472-467d-9166-48d72ffc7231/Data%20Mill%2014-01-2019.csv";
+		S().ajax(file,{
+			"this":this,
+			"cache":true,
+			"success":function(d,attr){
+				this.parseCSV(d,{'url':attr.url,'data':CSVToArray(d)});
+			}
+		});
+		return this;
+	};
 
 	// Return an HTML select box for the data types
 	CSVCleaner.prototype.buildSelect = function(typ,row,col){
@@ -507,17 +524,22 @@ S(document).ready(function(){
 			}
 		}
 		
-
 		// Work out the geography of the points
 		this.findGeography();
 		
 		// Construct the HTML table
-		this.buildTable()
+		this.buildTable();
+
+		//S('.step1').addClass('checked');
+		S('#step1').css({'display':'none'});
+		//S('.step2').addClass('processing');
+		S('#step2').css({'display':''});
 
 		// Construct the map
 		this.buildMap();
 
 		this.buildMessages();
+
 		return;
 	};
 	
@@ -911,10 +933,8 @@ return this;
 							result = (l > 0) ? evt.target.result.slice(0,l) : evt.target.result;
 						}else result = evt.target.result;
 
-						rows = CSVToArray(result);
-						
 						// Render table
-						_obj.parseCSV(result,{'url':f.name,'data':rows});
+						_obj.parseCSV(result,{'url':f.name,'data':CSVToArray(result)});
 					}
 				};
 				
@@ -925,10 +945,7 @@ return this;
 			}
 			//document.getElementById('list').innerHTML = '<p>File loaded:</p><ul>' + output.join('') + '</ul>';
 			S('#drop_zone').append(output).addClass('loaded');
-			//S('.step1').addClass('checked');
-			S('#step1').css({'display':'none'});
-			//S('.step2').addClass('processing');
-			S('#step2').css({'display':''});
+
 		}
 		return this;
 	}

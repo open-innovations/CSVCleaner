@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width" />
+	<title>CSV Cleaner</title>
+	<link rel="StyleSheet" href="resources/style.css" type="text/css" />
+	<link href="favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
+	<meta name="twitter:card" content="summary">
+	<meta name="twitter:site" content="@ODILeeds">
+	<meta name="twitter:url" property="og:url" content="https://odileeds.github.io/CSVCleaner/">
+	<meta name="twitter:title" property="og:title" content="CSV Cleaner">
+	<meta name="twitter:description" property="og:description" content="Tidy up some of the common formatting issues that make CSV files harder to consume. Aimed at those in Local Authorities publishing open data but without much in the way of internal tools.">
+	<meta name="twitter:image" property="og:image" content="https://odileeds.org/resources/images/odileeds.png">
+	<style>
+	#map { 
+		height: 620px;
+		display: block;
+		width: 100%;
+	}
+	.leaflet-popup-content h3 { margin-top: 0px; }
+	textarea, #map, td, th, table {
+		border: 1px solid #cccccc;
+	}
+	.dropzone {
+		border: 2px dashed #999999;
+		border-radius: 5px;
+		color: #333333;
+		padding: 25px;
+		text-align: center;
+		position: relative;
+	}
+	.dropzone.loaded {
+		border: 2px solid #333333;
+		color: #333333;
+	}
+	.dropzone.loaded .helpertext {
+		display: none;
+	}
+	.dropzone.drop {
+		background-color: #ddd;
+	}
+	.dropzone input {
+		position: absolute;
+		left: 0px;
+		top: 0px;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+	}
+	.glory .holder, .glory-opacity {
+		height: auto;
+	}
+	.table-holder {
+		overflow-x: auto;
+		width: 100%;
+	}
+	#schema textarea, #schema_file { margin-bottom: 16px; }
+	h2, h3 { margin-top: 48px; }
+	table {
+		max-height: 400px; overflow: scroll; 
+		border-collapse: collapse;
+	}
+	table th, table .rownum {
+		background-color: #ccc;
+		color: black;
+		text-align: center;
+		font-weight: 700;
+	}
+	table td {
+		white-space: nowrap;
+		overflow: hidden;
+		color: black;
+	}
+	table tr.nogeo {
+		background-color: rgba(214, 3, 3,0.2);
+	}
+	table tr.nogeo td {
+		color: #777;
+	}
+	table td, table th {
+		padding: 4px;
+		border: 1px solid #ccc;
+		border-right: 1px solid #aaa;
+		min-width: 150px;
+	}
+	table td:first-child, table th:first-child {
+		min-width: auto;
+		text-align: center;
+	}
+	.block {
+		min-height: auto;
+	}
+	input, select {
+		font-size: 1em;
+		width: 100%;
+	}
+	td.number, th.number {
+		text-align: center;
+	}
+	textarea {
+		width: 100%;
+		min-height: 15em;
+		padding: 6px;
+	}
+	table .constraint label { width: auto; display: inline-block; }
+	table .constraint select { width: auto; display: inline-block; }
+	table button {
+		padding: 2px 4px;
+		margin-left: 2px;
+	}
+	#main .seasonal .holder { position: relative; }
+	.label {
+		display: block;
+		position: absolute;
+		top: -4px;
+		right: 0em;
+		font-size: 0.75em;
+		font-weight: bold;
+		background-color: black;
+		padding: 4px 8px 2px 8px;
+		border-radius: 0.25em;
+		vertical-align: baseline;
+		white-space: nowrap; 
+		color: white;
+	}
+	#validate {
+		display: none;
+	}
+	.checked:before {
+		content: "✓";
+		color: #1dd3a7;
+		font-size: 2em;
+		left: -0.5em;
+		position: absolute;
+	}
+	.processing:before {
+		content: "⧗";
+		color: #00B6FF;
+		font-size: 2em;
+		left: -0.5em;
+		position: absolute;
+	}
+	.leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow {
+		-webkit-transition: -webkit-transform 0.3s ease-out, opacity 0.3s ease-in;
+		-moz-transition: -moz-transform 0.3s ease-out, opacity 0.3s ease-in;
+		-o-transition: -o-transform 0.3s ease-out, opacity 0.3s ease-in;
+		transition: transform 0.3s ease-out, opacity 0.3s ease-in;
+	}
+
+	.leaflet-cluster-spider-leg {
+		/* stroke-dashoffset (duration and function) should match with leaflet-marker-icon transform in order to track it exactly */
+		-webkit-transition: -webkit-stroke-dashoffset 0.3s ease-out, -webkit-stroke-opacity 0.3s ease-in;
+		-moz-transition: -moz-stroke-dashoffset 0.3s ease-out, -moz-stroke-opacity 0.3s ease-in;
+		-o-transition: -o-stroke-dashoffset 0.3s ease-out, -o-stroke-opacity 0.3s ease-in;
+		transition: stroke-dashoffset 0.3s ease-out, stroke-opacity 0.3s ease-in;
+	}
+	.marker-cluster-small {
+		background-color: rgba(181, 226, 140, 0.6);
+	}
+	.marker-cluster-small div {
+		background-color: rgba(110, 204, 57, 0.6);
+	}
+	.marker-cluster-medium {
+		background-color: rgba(241, 211, 87, 0.6);
+		}
+	.marker-cluster-medium div {
+		background-color: rgba(240, 194, 12, 0.6);
+		}
+
+	.marker-cluster-large {
+		background-color: rgba(253, 156, 115, 0.6);
+		}
+	.marker-cluster-large div {
+		background-color: rgba(241, 128, 23, 0.6);
+		}
+
+		/* IE 6-8 fallback colors */
+	.leaflet-oldie .marker-cluster-small {
+		background-color: rgb(181, 226, 140);
+		}
+	.leaflet-oldie .marker-cluster-small div {
+		background-color: rgb(110, 204, 57);
+		}
+
+	.leaflet-oldie .marker-cluster-medium {
+		background-color: rgb(241, 211, 87);
+		}
+	.leaflet-oldie .marker-cluster-medium div {
+		background-color: rgb(240, 194, 12);
+		}
+
+	.leaflet-oldie .marker-cluster-large {
+		background-color: rgb(253, 156, 115);
+		}
+	.leaflet-oldie .marker-cluster-large div {
+		background-color: rgb(241, 128, 23);
+	}
+
+	.marker-cluster {
+		background-clip: padding-box;
+		border-radius: 20px;
+		}
+	.marker-cluster div {
+		width: 30px;
+		height: 30px;
+		margin-left: 5px;
+		margin-top: 5px;
+
+		text-align: center;
+		border-radius: 15px;
+		font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+		}
+	.marker-cluster span {
+		line-height: 30px;
+		}
+	#map .marker-group {
+		border-radius: 100%;
+		text-align: center;
+		line-height: 40px;
+	}
+	</style>
+	<script type="text/javascript" src="resources/stuquery.js"></script>
+	<script type="text/javascript" src="resources/csvcleaner.js"></script>
+</head>
+<body>
+	<header class="b1-bg">
+		<div class="b1-bg glory">
+			<div class="glory-opacity">
+				<div class="holder">
+					<a href="http://odileeds.org/"><img alt="ODI Leeds" src="resources/odileeds.svg" title="ODI Leeds"></a>
+				</div>
+			</div>
+		</div>
+	</header>
+
+	<div id="main">
+		<div class="seasonal">
+			<div class="holder">
+				<h1>CSV Cleaner</h1><span class="label">ALPHA</span>
+			</div>
+		</div>
+
+		<div class="holder">
+			<form id="validation_form" method="post" enctype="multipart/form-data" action="http://csvlint.io/package" accept-charset="UTF-8">
+				<input id="no_js" type="hidden" name="no_js" value="1" />
+				<input type="hidden" value="✓" name="utf8">
+				<input type="hidden" name="urls[]" value="" />
+				<input type="hidden" name="urls[]" value="" />
+				<input type="hidden" name="files[]" value="" />
+
+				<p>Tidy up some of the common formatting issues that make CSV files harder to consume. This tool is aimed at those in Local Authorities who publish open data and want to make their files easier to reuse. We also have a <a href="https://odileeds.github.io/CSV2GeoJSON/">tool to generate a GeoJSON file from a CSV</a>.</p>
+
+				<h2 class="step1">1. Select a CSV file</h2>
+				<p>We'll only work with it within your browser so you don't need to worry about anything getting uploaded. You could <a href="http://csvlint.io/">check it is a valid CSV file</a> first with CSVLint from ODI HQ.</p>
+				<div id="drop_zone" class="dropzone block">
+					<div class="helpertext">
+						Drop CSV file here (or click to browse files)<br />
+						<input id="standard_files" class="fileselect" type="file" title="browse" name="files[]" multiple="multiple" accept=".csv, .tsv, .txt, .xlsx">
+					</div>
+				</div>
+				<output id="list"></output>
+
+				<h2 class="step2">2. Check the auto-detection of the table</h2>
+				<p>We'll make a guess at the columns that contain the geography. We'll look for "Latitude" and "Longitude". If those don't exist we'll look for "lat/lon", "GeoX/GeoY", or "Easting/Northing" pairs. Your coordinates should either be in WGS84 coordinates or OS Grid References. If we've not been able to find the geography columns you may need to rename your column headings in the table so we can find them.</p>
+				<output id="contents"></output>
+				
+
+				<h2 class="step3">3. Save CSV file</h2>
+				<output id="geojson">
+					<textarea></textarea>
+					<div id="filesize"></div>
+				</output>
+				<p><button type="button" id="save" class="seasonal">Save CSV</button> or copy and paste the output into a file with a .csv extension.</p>
+
+				<h2>Messages</h2>
+				<output id="messages"></output>
+			</form>
+		</div>
+	</div>
+
+	<footer class="b1-bg">
+		<div class="holder">
+				Created by Stuart Lowe, <a href="http://odileeds.org/projects/">ODI Leeds</a> 2018. Find <a href="https://github.com/odileeds/CSV2GeoJSON">the code on Github</a>.
+		</div>
+	</footer>
+</body>
+</html>

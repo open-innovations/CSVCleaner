@@ -7,7 +7,7 @@ S(document).ready(function(){
 	// Main function
 	function CSVCleaner(file){
 
-		this.maxrowstable = 8;	// Limit on the number of rows to display
+		this.maxrowstable = 10;	// Limit on the number of rows to display
 		this.newline = "++NEWLINE++";
 		
 		this.rules = {
@@ -99,6 +99,22 @@ S(document).ready(function(){
 						'precision': 2
 					}
 				},
+				'Liable From': {
+					'convert':{
+						'type': 'date',
+						'if':{
+							'type': ['string']
+						}
+					}
+				},
+				'Empty From': {
+					'convert':{
+						'type': 'date',
+						'if':{
+							'type': ['string']
+						}
+					}
+				},
 				'Discretionary Relief': {
 					'convert':{
 						'type': 'float',
@@ -122,6 +138,39 @@ S(document).ready(function(){
 					}
 				},
 				'Mandatory relief': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
+				'Transitional Relief': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
+				'Transitional Premium': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
+				'Net Local Discount': {
 					'convert':{
 						'type': 'float',
 						'if':{
@@ -369,24 +418,49 @@ S(document).ready(function(){
 					}
 				}
 			}
-			console.log(this.data.fields)
 			// Loop over the column rules to process data
 			for(rule in this.rules.columns){
 				if(this.rules.columns[rule].convert && rule==this.data.fields.title[c]){
-console.log(rule,this.rules.columns[rule].convert);
 					if(this.rules.columns[rule]['convert']['if']){
 						for(t = 0; t < this.rules.columns[rule]['convert']['if']['type'].length; t++){
 							if(this.rules.columns[rule]['convert']['if']['type'][t]==this.data.fields.format[c]){
 								console.log('convert from '+this.data.fields.format[c]+' to '+this.rules.columns[rule]['convert']['type']);
 								if(this.data.fields.format[c]=="string"&& (this.rules.columns[rule]['convert']['type']=="float" || this.rules.columns[rule]['convert']['type']=="double")){
-									this.messages.push({'type':'warning','title':'Convert '+rule+' from string to float'});
+									this.messages.push({'type':'warning','title':'Convert "<em>'+rule+'</em>" from string to float'});
 									this.data.fields.format[c] = "float";
 									for(r = 0; r < this.data.rows.length; r++) this.data.rows[r][c] = toFloat(this.data.rows[r][c]);
 								}
 								if(this.data.fields.format[c]=="string"&& this.rules.columns[rule]['convert']['type']=="integer"){
-									this.messages.push({'type':'warning','title':'Convert '+rule+' from string to integer'});
+									this.messages.push({'type':'warning','title':'Convert "<em>'+rule+'</em>" from string to integer'});
 									this.data.fields.format[c] = "integer";
 									for(r = 0; r < this.data.rows.length; r++) this.data.rows[r][c] = (this.data.rows[r][c] ? parseInt(this.data.rows[r][c]) : "");
+								}
+								if(this.data.fields.format[c]=="string"&& this.rules.columns[rule]['convert']['type']=="date"){
+									this.messages.push({'type':'warning','title':'Convert "<em>'+rule+'</em>" from string to date'});
+									this.data.fields.format[c] = "date";
+									var dates = [];
+									var tests = [];
+									// Try to identify date format
+									for(r = 0; r < this.data.rows.length; r++){
+										this.data.rows[r][c].replace(/^([0-9]+)[\/\-]([0-9]+)[\/\-]([0-9]+)/,function(m,p1,p2,p3){
+											dates[r] = {'a':parseInt(p1),'b':parseInt(p2),'c':parseInt(p3)};
+											tests.push(parseInt(p1));
+										});
+									}
+									max = Math.max(...tests);
+									if(max > 12 && max <= 31){
+										this.messages.push({'type':'warning','title':'Converting "<em>'+rule+'</em>" from British date format to ISO'});
+										for(r = 0; r < this.data.rows.length; r++){
+											if(this.data.rows[r][c]) this.data.rows[r][c] = dates[r].c+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a;
+										}
+									}else if(max <= 12){
+										this.messages.push({'type':'warning','title':'Converting "<em>'+rule+'</em>" from American date format to ISO'});
+										for(r = 0; r < this.data.rows.length; r++){
+											if(this.data.rows[r][c]) this.data.rows[r][c] = dates[r].c+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b;
+										}
+									}else if(max > 1000){
+										this.messages.push({'type':'warning','title':'Keeping "<em>'+rule+'</em>" as ISO date format'});
+									}
 								}
 							}
 						}
@@ -681,7 +755,7 @@ return this;
 		}
 		
 		if(!this.geocount) this.geocount = 0;
-		S('#about-table').html("We loaded <em>"+this.records+" records</em> (only showing the first "+mx+" in the table)."+(this.geocount < this.records ? ' <strong>'+this.geocount+' records appear to have geography</strong>.':''));
+		S('#about-table').html("We loaded <em>"+this.records+" records</em> (only showing the first "+mx+" in the table).");
 
 
 		if(!this.data.geo) this.data.geo = [];

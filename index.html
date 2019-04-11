@@ -254,25 +254,29 @@
 
 				<p>Tidy up some of the common formatting issues that make CSV files harder to consume. This tool is aimed at those in Local Authorities who publish open data and want to make their files easier to reuse. We also have a <a href="https://odileeds.github.io/CSV2GeoJSON/">tool to generate a GeoJSON file from a CSV</a>.</p>
 
-				<h2 class="step1">1. Select a CSV file</h2>
-				<p>We'll only work with it within your browser so you don't need to worry about anything getting uploaded. You could <a href="http://csvlint.io/">check it is a valid CSV file</a> first with CSVLint from ODI HQ.</p>
-				<div id="drop_zone" class="dropzone block">
-					<div class="helpertext">
-						Drop CSV file here (or click to browse files)<br />
-						<input id="standard_files" class="fileselect" type="file" title="browse" name="files[]" multiple="multiple" accept=".csv, .tsv, .txt, .xlsx">
+				<section id="step1">
+					<h2 class="step1">Select a CSV file</h2>
+					<p>We'll only work with it within your browser so you don't need to worry about anything getting uploaded. You could <a href="http://csvlint.io/">check it is a valid CSV file</a> first with CSVLint from ODI HQ.</p>
+					<div id="drop_zone" class="dropzone block">
+						<div class="helpertext">
+							Drop CSV file here (or click to browse files)<br />
+							<input id="standard_files" class="fileselect" type="file" title="browse" name="files[]" multiple="multiple" accept=".csv, .tsv, .txt, .xlsx">
+						</div>
 					</div>
-				</div>
-				<output id="list"></output>
+					<output id="list"></output>
+				</section>
 
-				<h2 class="step2">2. Check the table</h2>
-				<p>Make sure to check if the table has been cleaned correctly.</p>
-				<output id="contents"></output>
-				<output id="csv">
-					<pre id="csvcontents"></pre>
-					<div id="filesize"></div>
-				</output>
-				
-				<p><button type="button" id="save" class="seasonal">Save CSV</button> or copy and paste the output into a file with a .csv extension.</p>
+				<section id="step2">
+					<h2 class="step2">Check the table</h2>
+					<p>Make sure to check if the table has been cleaned correctly.</p>
+					<output id="contents"></output>
+					<output id="csv">
+						<pre id="csvcontents"></pre>
+						<div id="filesize"></div>
+					</output>
+					
+					<p><button type="button" id="save" class="seasonal">Save CSV</button> or copy and paste the output into a file with a .csv extension.</p>
+				</section>
 
 				<h2>Messages</h2>
 				<output id="messages"></output>

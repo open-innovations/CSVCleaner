@@ -244,6 +244,8 @@ S(document).ready(function(){
 			return _obj.handleFileSelect(evt,'csv');
 		}, false);
 
+		S('#step2').css({'display':'none'});
+
 		return this;
 	}
 
@@ -697,7 +699,7 @@ return this;
 
 		S('#filesize').html('<p>File size: '+niceSize(txt.length)+'</p>');
 
-		S('.step2').removeClass('processing').addClass('checked');
+		//S('.step2').removeClass('processing').addClass('checked');
 
 		return this;
 	}
@@ -778,7 +780,7 @@ return this;
 		this.csv = csvhead+'\n'+csv;
 		S('#csvcontents').html(this.csv);
 		
-		S('.step2').removeClass('processing').addClass('checked');
+		//S('.step2').removeClass('processing').addClass('checked');
 
 		return this;
 	}
@@ -887,8 +889,10 @@ return this;
 			}
 			//document.getElementById('list').innerHTML = '<p>File loaded:</p><ul>' + output.join('') + '</ul>';
 			S('#drop_zone').append(output).addClass('loaded');
-			S('.step1').addClass('checked');
-			S('.step2').addClass('processing');
+			//S('.step1').addClass('checked');
+			S('#step1').css({'display':'none'});
+			//S('.step2').addClass('processing');
+			S('#step2').css({'display':''});
 		}
 		return this;
 	}

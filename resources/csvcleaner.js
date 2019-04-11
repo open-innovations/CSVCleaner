@@ -14,7 +14,7 @@ S(document).ready(function(){
 			'name': 'Default options',
 			'clean': {
 				'trailingcolumns': true,
-				'spaces': true,
+				'trailingspaces': true,	// Not implemented yet
 				'numbers': true,	// Not implemented yet
 				'nontable': true,
 				'escapenewlines': true,
@@ -44,6 +44,16 @@ S(document).ready(function(){
 						'if':{
 							'type': ['integer','float','double']
 						}
+					}
+				},
+				'Mandaory relief': {
+					'rename':{
+						'title':'Mandatory relief'
+					}
+				},
+				'Discretionay Relief': {
+					'rename':{
+						'title':'Discretionary Relief'
 					}
 				},
 				'Latitude': {
@@ -89,6 +99,39 @@ S(document).ready(function(){
 						'precision': 2
 					}
 				},
+				'Discretionary Relief': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
+				'Small Business Relief': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
+				'Mandatory relief': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
 				'Postcode': {
 					'require': true
 				},
@@ -120,15 +163,6 @@ S(document).ready(function(){
 					'validate':{
 						'type': ['date'],
 						'regex': '[0-9]{4}-[0-9]{2}-[0-9]{2}'
-					}
-				},
-				'Mandaory relief':{
-					'type': ['string','integer','float','double'],
-					'convert':{
-						'type': 'float',
-						'if':{
-							'type':['string']
-						}
 					}
 				}
 			}
@@ -187,7 +221,6 @@ S(document).ready(function(){
 		this.csv = data;
 		this.attr = attr;
 		this.messages = [];
-		
 		// Look for dodgy header/footer sections
 		if(this.rules.clean){
 			var r,c,newdata,startrow,maxcols,minempty,empty,emptyend,badend;
@@ -200,7 +233,7 @@ S(document).ready(function(){
 				if(!cols[c]) cols[c] = 0;
 			}
 			maxcols = cols.indexOf(Math.max(...cols));
-
+			
 			if(this.rules.clean.trailingcolumns){
 				minempty = maxcols;
 				// Work out how many trailing columns there are
@@ -273,7 +306,21 @@ S(document).ready(function(){
 				}
 				if(emptylines > 0) this.messages.push({'type':'warning','title':'Removed '+emptylines+' empty lines'});
 			}
-			
+
+			if(this.rules.clean.trailingspaces){
+				// Remove trailing spaces
+				removed = 0;
+				for(r = attr.data.length-1; r >= 0; r--){
+					for(c = 0; c < attr.data[r].length; c++){
+						txt = attr.data[r][c].replace(/\s+$/,"");
+						if(txt != attr.data[r][c]){
+							removed++;
+							attr.data[r][c] = txt;
+						}
+					}
+				}
+				if(removed > 0) this.messages.push({'type':'warning','title':'Removed '+removed+' trailing spaces'});
+			}
 		}
 
 		// Convert the CSV to a JSON structure
@@ -290,8 +337,18 @@ S(document).ready(function(){
 				if(this.rules && this.rules.clean && this.rules.clean.numbers && (this.data.fields.format[c]=="float" || this.data.fields.format[c]=="double")) this.data.rows[r][c] = (this.data.rows[r][c] ? parseFloat(this.data.rows[r][c]) : "");
 			}
 		}
-console.log(this.data);
+
 		this.records = this.data.rows.length; 
+		
+		function toFloat(str){
+			if(str){
+				str = str.replace(/[^\-\+\.\,0-9Ee]/g,"");
+				str = str.replace(/\,/g,"");
+			}else{
+				str = "";
+			}
+			return str;
+		}
 
 		// Loop over the columns processing the rules
 		for(c = 0 ; c < this.data.fields.name.length; c++){
@@ -312,9 +369,11 @@ console.log(this.data);
 					}
 				}
 			}
+			console.log(this.data.fields)
 			// Loop over the column rules to process data
 			for(rule in this.rules.columns){
 				if(this.rules.columns[rule].convert && rule==this.data.fields.title[c]){
+console.log(rule,this.rules.columns[rule].convert);
 					if(this.rules.columns[rule]['convert']['if']){
 						for(t = 0; t < this.rules.columns[rule]['convert']['if']['type'].length; t++){
 							if(this.rules.columns[rule]['convert']['if']['type'][t]==this.data.fields.format[c]){
@@ -322,7 +381,7 @@ console.log(this.data);
 								if(this.data.fields.format[c]=="string"&& (this.rules.columns[rule]['convert']['type']=="float" || this.rules.columns[rule]['convert']['type']=="double")){
 									this.messages.push({'type':'warning','title':'Convert '+rule+' from string to float'});
 									this.data.fields.format[c] = "float";
-									for(r = 0; r < this.data.rows.length; r++) this.data.rows[r][c] = (this.data.rows[r][c] ? parseFloat(this.data.rows[r][c].replace(/[^\-\+\.\,0-9Ee]/g,"")) : "");
+									for(r = 0; r < this.data.rows.length; r++) this.data.rows[r][c] = toFloat(this.data.rows[r][c]);
 								}
 								if(this.data.fields.format[c]=="string"&& this.rules.columns[rule]['convert']['type']=="integer"){
 									this.messages.push({'type':'warning','title':'Convert '+rule+' from string to integer'});
@@ -335,8 +394,6 @@ console.log(this.data);
 				}
 			}
 		}
-		
-		
 		
 
 		// Work out the geography of the points
@@ -581,6 +638,8 @@ return this;
 		// Create the data table
 		var thead = "";
 		var tbody = "";
+		var csv = "";
+		var csvhead = "";
 		var mx = Math.min(this.data.rows.length,this.maxrowstable);
 
 		if(S('#output-table').length==0){
@@ -591,6 +650,8 @@ return this;
 
 			for(var c in this.data.fields.name){
 				thead += '<th><input id="title-'+c+'" type="text" value="'+this.data.fields.title[c]+'" data-row="title" data-col="'+c+'" /></th>';
+				if(csvhead) csvhead += ',';
+				csvhead += this.data.fields.title[c];
 			}
 
 			thead += '</tr>';
@@ -618,19 +679,33 @@ return this;
 			});
 
 		}
+		
 		if(!this.geocount) this.geocount = 0;
 		S('#about-table').html("We loaded <em>"+this.records+" records</em> (only showing the first "+mx+" in the table)."+(this.geocount < this.records ? ' <strong>'+this.geocount+' records appear to have geography</strong>.':''));
 
 
 		if(!this.data.geo) this.data.geo = [];
 		for(var i = 0; i < mx; i++){
-			tbody += '<tr'+(this.data.geo[i] && this.data.geo[i].length==2 ? '':' class="nogeo"')+'><td class="rn">'+(i+1)+'</td>';
+			tbody += '<tr><td class="rn">'+(i+1)+'</td>';
 			for(var c = 0; c < this.data.rows[i].length; c++){
 				tbody += '<td '+(this.data.fields.format[c] == "float" || this.data.fields.format[c] == "integer" || this.data.fields.format[c] == "year" || this.data.fields.format[c] == "date" || this.data.fields.format[c] == "datetime" ? ' class="n"' : '')+'>'+(typeof this.data.rows[i][c]==="string" ? this.data.rows[i][c]:this.data.rows[i][c])+'</td>';
 			}
 			tbody += '</tr>';
 		}
 		S('#output-table tbody').html(tbody);
+
+		
+		
+		for(var r = 0; r < this.data.rows.length; r++){
+			for(var c = 0; c < this.data.rows[r].length; c++){
+				if(c > 0) csv += ',';
+				if(this.data.fields.format[c]=="string")csv += this.data.rows[r][c].replace(/[\n\r]/g,'');
+				else csv += this.data.rows[r][c];
+			}
+			csv += "\n";
+		}
+		S('#csvcontents').html(csvhead+'\n'+csv);
+		
 
 		return this;
 	}
@@ -726,14 +801,8 @@ return this;
 							result = (l > 0) ? evt.target.result.slice(0,l) : evt.target.result;
 						}else result = evt.target.result;
 
-						// First, replace escaped newline characters
-						removenewlines = true;
-						while(removenewlines){
-							tmp = result+'';
-							result = result.replace(/("[^"\n]*)\r?\n(?!(([^"]*"){2})*[^"]*$)/,function(m,p1){ return p1+_obj.newline; });
-							if(tmp == result) removenewlines = false;
-						}
-						var rows = CSVToArray(result);
+						rows = CSVToArray(result);
+						
 						// Render table
 						_obj.parseCSV(result,{'url':f.name,'data':rows});
 					}
@@ -758,8 +827,8 @@ return this;
 	}
 
 
-
 	/**
+	 * https://www.bennadel.com/blog/1504-ask-ben-parsing-csv-strings-with-javascript-exec-regular-expression-command.htm
 	 * CSVToArray parses any String of Data including '\r' '\n' characters,
 	 * and returns an array with the rows of data.
 	 * @param {String} CSV_string - the CSV string you need to parse
@@ -767,45 +836,45 @@ return this;
 	 * @returns {Array} rows - rows of CSV where first row are column headers
 	 */
 	function CSVToArray (CSV_string, delimiter) {
-		delimiter = (delimiter || ","); // user-supplied delimeter or default comma
+	   delimiter = (delimiter || ","); // user-supplied delimeter or default comma
 
-		var pattern = new RegExp( // regular expression to parse the CSV values.
-			( // Delimiters:
-				"(\\" + delimiter + "|\\r?\\n|\\r|^)" +
-				// Quoted fields.
-				"(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
-				// Standard fields.
-				"([^\"\\" + delimiter + "\\r\\n]*))"
-			), "gi"
-		);
+	   var pattern = new RegExp( // regular expression to parse the CSV values.
+		 ( // Delimiters:
+		   "(\\" + delimiter + "|\\r?\\n|\\r|^)" +
+		   // Quoted fields.
+		   "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+		   // Standard fields.
+		   "([^\"\\" + delimiter + "\\r\\n]*))"
+		 ), "gi"
+	   );
 
-		var rows = [[]];  // array to hold our data. First row is column headers.
-		// array to hold our individual pattern matching groups:
-		var matches = false; // false if we don't find any matches
-		// Loop until we no longer find a regular expression match
-		while (matches = pattern.exec( CSV_string )) {
-			var matched_delimiter = matches[1]; // Get the matched delimiter
-			// Check if the delimiter has a length (and is not the start of string)
-			// and if it matches field delimiter. If not, it is a row delimiter.
-			if (matched_delimiter.length && matched_delimiter !== delimiter) {
-				// Since this is a new row of data, add an empty row to the array.
-				rows.push( [] );
-			}
-			var matched_value;
-			// Once we have eliminated the delimiter, check to see
-			// what kind of value was captured (quoted or unquoted):
-			if (matches[2]) { // found quoted value. unescape any double quotes.
-				matched_value = matches[2].replace(
-					new RegExp( "\"\"", "g" ), "\""
-				);
-			} else { // found a non-quoted value
-				matched_value = matches[3];
-			}
-			// Now that we have our value string, let's add
-			// it to the data array.
-			rows[rows.length - 1].push(matched_value);
-		}
-		return rows; // Return the parsed data Array
+	   var rows = [[]];  // array to hold our data. First row is column headers.
+	   // array to hold our individual pattern matching groups:
+	   var matches = false; // false if we don't find any matches
+	   // Loop until we no longer find a regular expression match
+	   while (matches = pattern.exec( CSV_string )) {
+		   var matched_delimiter = matches[1]; // Get the matched delimiter
+		   // Check if the delimiter has a length (and is not the start of string)
+		   // and if it matches field delimiter. If not, it is a row delimiter.
+		   if (matched_delimiter.length && matched_delimiter !== delimiter) {
+			 // Since this is a new row of data, add an empty row to the array.
+			 rows.push( [] );
+		   }
+		   var matched_value;
+		   // Once we have eliminated the delimiter, check to see
+		   // what kind of value was captured (quoted or unquoted):
+		   if (matches[2]) { // found quoted value. unescape any double quotes.
+			matched_value = matches[2].replace(
+			  new RegExp( "\"\"", "g" ), "\""
+			);
+		   } else { // found a non-quoted value
+			 matched_value = matches[3];
+		   }
+		   // Now that we have our value string, let's add
+		   // it to the data array.
+		   rows[rows.length - 1].push(matched_value);
+	   }
+	   return rows; // Return the parsed data Array
 	}
 
 	// Function to parse a 2D array and return a JSON structure
@@ -863,7 +932,6 @@ return this;
 				rows++;
 			}
 		}
-		console.log(formats)
 		
 		// Now, for each column, we sum the different formats we've found
 		var format = new Array(header.length);

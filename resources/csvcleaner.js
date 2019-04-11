@@ -46,6 +46,31 @@ S(document).ready(function(){
 						}
 					}
 				},
+				'Liable From': {
+					'rename':{
+						'title':'Liability start date'
+					}
+				},
+				'Empty From': {
+					'rename':{
+						'title':'Empty from'
+					}
+				},
+				'Rateable Value': {
+					'rename':{
+						'title':'Rateable value'
+					}
+				},
+				'Description': {
+					'rename':{
+						'title':'VOA description'
+					}
+				},
+				'VOA Description code': {
+					'rename':{
+						'title':'VOA code'
+					}
+				},
 				'Mandaory relief': {
 					'rename':{
 						'title':'Mandatory relief'
@@ -99,7 +124,18 @@ S(document).ready(function(){
 						'precision': 2
 					}
 				},
-				'Liable From': {
+				'Rateable value': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
+				'Liability start date': {
 					'convert':{
 						'type': 'date',
 						'if':{

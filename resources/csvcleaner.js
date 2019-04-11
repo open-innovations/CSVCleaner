@@ -478,9 +478,6 @@ S(document).ready(function(){
 
 		// Construct the map
 		this.buildMap();
-		
-		S('.step2').removeClass('processing').addClass('checked');
-
 
 		this.buildMessages();
 		return;
@@ -778,8 +775,10 @@ return this;
 			}
 			csv += "\n";
 		}
-		S('#csvcontents').html(csvhead+'\n'+csv);
+		this.csv = csvhead+'\n'+csv;
+		S('#csvcontents').html(this.csv);
 		
+		S('.step2').removeClass('processing').addClass('checked');
 
 		return this;
 	}
@@ -800,7 +799,6 @@ return this;
 		this.buildTable();
 		this.buildMap();
 
-		S('.step2').removeClass('processing').addClass('checked');
 
 		return this;
 	}
@@ -810,9 +808,9 @@ return this;
 		// Bail out if there is no Blob function
 		if(typeof Blob!=="function") return this;
 
-		var textFileAsBlob = new Blob([JSON.stringify(this.geojson)], {type:'text/plain'});
-		if(!this.file) this.file = "schema.json";
-		var fileNameToSaveAs = this.file.substring(0,this.file.lastIndexOf("."))+".geojson";
+		var textFileAsBlob = new Blob([this.csv], {type:'text/plain'});
+		if(!this.file) this.file = "data.csv";
+		var fileNameToSaveAs = this.file.substring(0,this.file.lastIndexOf("."))+".csv";
 
 		function destroyClickedElement(event){ document.body.removeChild(event.target); }
 

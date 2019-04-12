@@ -11,11 +11,11 @@ S(document).ready(function(){
 	// Main function
 	function CSVCleaner(file){
 
-		this.title = "CSVCleaner";
 		this.version = "1.1";
 		this.maxrowstable = 10;	// Limit on the number of rows to display
 		this.newline = "++NEWLINE++";
 		this.logging = true;
+		this.log = new Logger({'id':'CSVCleaner','logging':this.logging});
 		
 		this.defaultrules = {
 			'name': 'Default options',
@@ -318,10 +318,10 @@ S(document).ready(function(){
 			"cache": true,
 			"success": function(d,attr){
 				this.rules = d;
-				console.log(d,attr);
+				this.log.message(d,attr);
 			},
 			"error": function(e,attr){
-				console.log('ERROR','Unable to load '+attr.url,e,attr);
+				this.log.error('Unable to load '+attr.url,e,attr);
 			}
 		});
 		return this;
@@ -336,7 +336,7 @@ S(document).ready(function(){
 				this.parseCSV(d,{'url':attr.url,'data':CSVToArray(d)});
 			},
 			"error": function(e,attr){
-				console.log('ERROR','Unable to load '+attr.url,e,attr);
+				this.log.error('Unable to load '+attr.url,e,attr);
 			}
 		});
 		return this;
@@ -476,7 +476,7 @@ S(document).ready(function(){
 		// Put back newlines, and tidy numbers
 		var nl = new RegExp(this.newline.replace(/\+/g,"\\\+"),"g");
 		var nl2 = "\n";
-		this.log(this.rules)
+		this.log.message(this.rules);
 		if(this.rules && this.rules.clean && this.rules.clean.escapenewlines) nl2 = "\\n";
 		for(r = 0; r < this.data.rows.length; r++){
 			for(c = 0; c < this.data.rows[r].length; c++){
@@ -523,7 +523,7 @@ S(document).ready(function(){
 					if(this.rules.columns[rule]['convert']['if']){
 						for(t = 0; t < this.rules.columns[rule]['convert']['if']['type'].length; t++){
 							if(this.rules.columns[rule]['convert']['if']['type'][t]==this.data.fields.format[c]){
-								console.log('convert from '+this.data.fields.format[c]+' to '+this.rules.columns[rule]['convert']['type']);
+								this.log.message('convert from '+this.data.fields.format[c]+' to '+this.rules.columns[rule]['convert']['type']);
 								if(this.data.fields.format[c]=="string"&& (this.rules.columns[rule]['convert']['type']=="float" || this.rules.columns[rule]['convert']['type']=="double")){
 									this.messages.push({'type':'warning','title':'Convert "<em>'+rule+'</em>" from string to float'});
 									this.data.fields.format[c] = "float";
@@ -993,18 +993,6 @@ return this;
 		}
 		return this;
 	};
-
-	CSVCleaner.prototype.log = function(){
-		if(this.logging || arguments[0]=="ERROR"){
-			var args = Array.prototype.slice.call(arguments, 0);
-			if(console && typeof console.log==="function"){
-				if(arguments[0] == "ERROR") console.error('%c'+this.title+'%c: '+args[1],'font-weight:bold;','',(args.splice(2).length > 0 ? args.splice(2):""));
-				else if(arguments[0] == "WARNING") console.warn('%c'+this.title+'%c: '+args[1],'font-weight:bold;','',(args.splice(2).length > 0 ? args.splice(2):""));
-				else console.log('%c'+this.title+'%c','font-weight:bold;','',args);
-			}
-		}
-		return this;
-	};
 	
 	/**
 	 * https://www.bennadel.com/blog/1504-ask-ben-parsing-csv-strings-with-javascript-exec-regular-expression-command.htm
@@ -1247,7 +1235,61 @@ return this;
 		return (b)+" bytes";
 	}
 
-
+	function Logger(inp){
+		if(!inp) inp = {};
+		this.logging = (inp.logging||false);
+		this.logtime = (inp.logtime||false);
+		this.id = (inp.id||"JS");
+		this.metrics = {};
+		return this;
+	}
+	Logger.prototype.error = function(){ this.log('ERROR',arguments); };
+	Logger.prototype.warning = function(){ this.log('WARNING',arguments); };
+	Logger.prototype.info = function(){ this.log('INFO',arguments); };
+	Logger.prototype.message = function(){ this.log('MESSAGE',arguments); }
+	Logger.prototype.log = function(){
+		if(this.logging || arguments[0]=="ERROR" || arguments[0]=="WARNING" || arguments[0]=="INFO"){
+			var args,args2,bold;
+			args = Array.prototype.slice.call(arguments[1], 0);
+			bold = 'font-weight:bold;';
+			if(console && typeof console.log==="function"){
+				if(arguments[0] == "ERROR") console.error('%c'+this.id+'%c: '+args[0],bold,'',args);
+				else if(arguments[0] == "WARNING") console.warn('%c'+this.id+'%c: '+args[0],bold,'',args);
+				else if(arguments[0] == "INFO") console.info('%c'+this.id+'%c: '+args[0],bold,'',args);
+				else console.log('%c'+this.id+'%c: '+args[0],bold,'',args);
+			}
+		}
+		return this;
+	}
+	Logger.prototype.time = function(key){
+		if(!this.metrics[key]) this.metrics[key] = {'times':[],'start':''};
+		if(!this.metrics[key].start) this.metrics[key].start = new Date();
+		else{
+			var t,w,v,tot,l,i,ts;
+			t = ((new Date())-this.metrics[key].start);
+			ts = this.metrics[key].times;
+			// Define the weights for each time in the array
+			w = [1,0.75,0.55,0.4,0.28,0.18,0.1,0.05,0.002];
+			// Add this time to the start of the array
+			ts.unshift(t);
+			// Remove old times from the end
+			if(ts.length > w.length-1) ts = ts.slice(0,w.length);
+			// Work out the weighted average
+			l = ts.length;
+			this.metrics[key].av = 0;
+			if(l > 0){
+				for(i = 0, v = 0, tot = 0 ; i < l ; i++){
+					v += ts[i]*w[i];
+					tot += w[i];
+				}
+				this.metrics[key].av = v/tot;
+			}
+			this.metrics[key].times = ts.splice(0);
+			if(this.logtime) this.info(key+' '+t+'ms ('+this.metrics[key].av.toFixed(1)+'ms av)');
+			delete this.metrics[key].start;
+		}
+		return this;
+	};
 
 	// Define a new instance of the Converter
 	cleaner = new CSVCleaner();

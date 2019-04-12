@@ -1,5 +1,9 @@
 /*!
  * ODI Leeds CSV Cleaner (version 1.0)
+ *
+ * TO DO:
+ *   - Show which fields have been changed
+ *   - Change profiles
  */
 var cleaner;
 S(document).ready(function(){
@@ -7,10 +11,13 @@ S(document).ready(function(){
 	// Main function
 	function CSVCleaner(file){
 
+		this.title = "CSVCleaner";
+		this.version = "1.1";
 		this.maxrowstable = 10;	// Limit on the number of rows to display
 		this.newline = "++NEWLINE++";
+		this.logging = true;
 		
-		this.rules = {
+		this.defaultrules = {
 			'name': 'Default options',
 			'clean': {
 				'trailingcolumns': true,
@@ -252,6 +259,7 @@ S(document).ready(function(){
 				}
 			}
 		};
+		this.rules = JSON.parse(JSON.stringify(this.defaultrules));
 
 		// The supported data types as specified in http://csvlint.io/about
 		//this.datatypes = [{"label":"string","ref":"http://www.w3.org/2001/XMLSchema#string"},{"label":"integer","ref":"http://www.w3.org/2001/XMLSchema#int"},{"label":"float","ref":"http://www.w3.org/2001/XMLSchema#float"},{"label":"double","ref":"http://www.w3.org/2001/XMLSchema#double"},{"label":"URL","ref":"http://www.w3.org/2001/XMLSchema#anyURI"},{"label":"boolean","ref":"http://www.w3.org/2001/XMLSchema#boolean"},{"label":"non-positive integer","ref":"http://www.w3.org/2001/XMLSchema#nonPositiveInteger"}, {"label":"positive integer","ref":"http://www.w3.org/2001/XMLSchema#positiveInteger"}, {"label":"non-negative integer","ref":"http://www.w3.org/2001/XMLSchema#nonNegativeInteger"}, {"label":"negative integer","ref":"http://www.w3.org/2001/XMLSchema#negativeInteger"},{"label":"date","ref":"http://www.w3.org/2001/XMLSchema#date"}, {"label":"date & time","ref":"http://www.w3.org/2001/XMLSchema#dateTime"},{"label":"year","ref":"http://www.w3.org/2001/XMLSchema#gYear"},{"label":"year & month","ref":"http://www.w3.org/2001/XMLSchema#gYearMonth"},{"label":"time","ref":"http://www.w3.org/2001/XMLSchema#time "}];
@@ -314,6 +322,22 @@ S(document).ready(function(){
 		return this;
 	};
 
+	CSVCleaner.prototype.loadProfile = function(file){
+		S().ajax(file,{
+			"dataType": "json",
+			"this": this,
+			"cache": true,
+			"success": function(d,attr){
+				this.rules = d;
+				console.log(d,attr);
+			},
+			"error": function(e,attr){
+				console.log('ERROR','Unable to load '+attr.url,e,attr);
+			}
+		});
+		return this;
+	};
+	
 	CSVCleaner.prototype.loadExample = function(){
 		file = "https://datamillnorth.org/download/business-rates/8822678c-f472-467d-9166-48d72ffc7231/Data%20Mill%2014-01-2019.csv";
 		S().ajax(file,{
@@ -321,6 +345,9 @@ S(document).ready(function(){
 			"cache":true,
 			"success":function(d,attr){
 				this.parseCSV(d,{'url':attr.url,'data':CSVToArray(d)});
+			},
+			"error": function(e,attr){
+				console.log('ERROR','Unable to load '+attr.url,e,attr);
 			}
 		});
 		return this;
@@ -332,7 +359,7 @@ S(document).ready(function(){
 		for(var t = 0; t < this.datatypes.length; t++) html += "<option"+(this.datatypes[t].label == typ ? " selected=\"selected\"":"")+" value=\""+this.datatypes[t].label+"\">"+this.datatypes[t].label+"</option>";
 		html += "</select>";
 		return html;
-	}
+	};
 	
 	// Return an HTML true/false select box
 	CSVCleaner.prototype.buildTrueFalse = function(yes,row,col){
@@ -341,7 +368,7 @@ S(document).ready(function(){
 		html += '<option'+(!yes ? " selected=\"selected\"":"")+' value="false">False</option>';
 		html += "</select>";
 		return html;
-	}
+	};
 	
 	// Parse the CSV file
 	CSVCleaner.prototype.parseCSV = function(data,attr){
@@ -460,6 +487,7 @@ S(document).ready(function(){
 		// Put back newlines, and tidy numbers
 		var nl = new RegExp(this.newline.replace(/\+/g,"\\\+"),"g");
 		var nl2 = "\n";
+		this.log(this.rules)
 		if(this.rules && this.rules.clean && this.rules.clean.escapenewlines) nl2 = "\\n";
 		for(r = 0; r < this.data.rows.length; r++){
 			for(c = 0; c < this.data.rows[r].length; c++){
@@ -638,7 +666,7 @@ return this;
 		}
 
 		return this;
-	}
+	};
 
 	CSVCleaner.prototype.buildMap = function(){
 
@@ -785,8 +813,7 @@ return this;
 		//S('.step2').removeClass('processing').addClass('checked');
 
 		return this;
-	}
-	
+	};
 	
 	// Construct the HTML table
 	CSVCleaner.prototype.buildTable = function(){
@@ -865,7 +892,7 @@ return this;
 		//S('.step2').removeClass('processing').addClass('checked');
 
 		return this;
-	}
+	};
 
 	// Process a form element and update the data structure
 	CSVCleaner.prototype.update = function(id,value){
@@ -883,9 +910,8 @@ return this;
 		this.buildTable();
 		this.buildMap();
 
-
 		return this;
-	}
+	};
 			
 	CSVCleaner.prototype.save = function(){
 
@@ -917,7 +943,7 @@ return this;
 		S('.step3').addClass('checked');
 
 		return this;
-	}
+	};
 
 	CSVCleaner.prototype.handleFileSelect = function(evt,typ){
 
@@ -972,14 +998,20 @@ return this;
 
 		}
 		return this;
-	}
+	};
 
-	CSVCleaner.prototype.validate = function(){
-
-		return false;
-	}
-
-
+	CSVCleaner.prototype.log = function(){
+		if(this.logging || arguments[0]=="ERROR"){
+			var args = Array.prototype.slice.call(arguments, 0);
+			if(console && typeof console.log==="function"){
+				if(arguments[0] == "ERROR") console.error('%c'+this.title+'%c: '+args[1],'font-weight:bold;','',(args.splice(2).length > 0 ? args.splice(2):""));
+				else if(arguments[0] == "WARNING") console.warn('%c'+this.title+'%c: '+args[1],'font-weight:bold;','',(args.splice(2).length > 0 ? args.splice(2):""));
+				else console.log('%c'+this.title+'%c','font-weight:bold;','',args);
+			}
+		}
+		return this;
+	};
+	
 	/**
 	 * https://www.bennadel.com/blog/1504-ask-ben-parsing-csv-strings-with-javascript-exec-regular-expression-command.htm
 	 * CSVToArray parses any String of Data including '\r' '\n' characters,

@@ -15,7 +15,8 @@ S(document).ready(function(){
 		this.maxrowstable = 10;	// Limit on the number of rows to display
 		this.logging = true;
 		this.log = new Logger({'id':'CSVCleaner','logging':this.logging});
-		
+		this.messages = [];
+		this.changes = 0;
 		this.defaultrules = {
 			'name': 'Default options',
 			'clean': {
@@ -53,6 +54,10 @@ S(document).ready(function(){
 						}
 					}
 				},
+				'easting': { 'rename':{ 'title':'Easting' } },
+				'northing': { 'rename':{ 'title':'Northing' } },
+				'eastings': { 'rename':{ 'title':'Easting' } },
+				'northings': { 'rename':{ 'title':'Northing' } },
 				'lat': { 'rename':{ 'title':'Latitude' } },
 				'lon': { 'rename':{ 'title':'Longitude' } },
 				'long': { 'rename':{ 'title':'Longitude' } },
@@ -225,14 +230,6 @@ S(document).ready(function(){
 						}
 					}
 				},
-				'Empty from': {
-					'rename':{
-						'title':'Liability start date',
-						'if':{
-							'type': ['date','datetime','string']
-						}
-					}
-				},
 				'Liability start date': {
 					'type':['date','datetime','string'],
 					'convert':{
@@ -307,6 +304,7 @@ S(document).ready(function(){
 		delete this.map;
 		delete this.file;
 		this.messages = [];
+		this.changes = 0;
 		
 		return this;
 	};
@@ -362,12 +360,10 @@ S(document).ready(function(){
 	// Parse the CSV file
 	CSVCleaner.prototype.parseCSV = function(data,attr){
 
-		//S('.step1').addClass('checked');
 		S('#step1').css({'display':'none'});
 
 		this.csv = data;
 		this.attr = attr;
-		this.messages = [];
 		// Look for dodgy header/footer sections
 		if(this.rules.clean){
 			var r,c,newdata,startrow,maxcols,minempty,empty,emptyend,badend;
@@ -400,7 +396,8 @@ S(document).ready(function(){
 					for(r = 0; r < attr.data.length; r++){
 						if(attr.data[r].length == maxcols) attr.data[r].splice(maxcols-minempty);
 					}
-					this.messages.push({'type':'warning','title':'Removed '+minempty+' trailing columns'});
+					this.changes += minempty;
+					this.messages.push({'type':'warning','title':'Removed '+minempty+' trailing column'+(minempty==1 ? "":"s")});
 				}
 				maxcols -= minempty;
 			}
@@ -422,7 +419,8 @@ S(document).ready(function(){
 				}
 				if(startrow > 0){
 					attr.data.splice(0,startrow);
-					this.messages.push({'type':'warning','title':'Removed '+startrow+' rows at start'});
+					this.messages.push({'type':'warning','title':'Removed '+startrow+' row'+(startrow==1 ? "":"s")+' at start'});
+					this.changes += startrow;
 				}
 				endrow = 0;
 
@@ -435,7 +433,10 @@ S(document).ready(function(){
 						r = 0;
 					}
 				}
-				if(endrow < attr.data.length) this.messages.push({'type':'warning','title':'Removed '+(endrow)+' rows at end'});
+				if(endrow < attr.data.length){
+					this.messages.push({'type':'warning','title':'Removed '+(endrow)+' row'+(endrow==1 ? "":"s")+' at end'});
+					this.changes += endrow;
+				}
 			}
 			
 			if(this.rules.clean.emptylines){
@@ -451,7 +452,10 @@ S(document).ready(function(){
 						attr.data.splice(r,1);
 					}
 				}
-				if(emptylines > 0) this.messages.push({'type':'warning','title':'Removed '+emptylines+' empty lines'});
+				if(emptylines > 0){
+					this.messages.push({'type':'warning','title':'Removed '+emptylines+' empty line'+(emptylines==1 ? "":"s")});
+					this.changes += emptylines;
+				}
 			}
 
 			if(this.rules.clean.trailingspaces){
@@ -466,7 +470,10 @@ S(document).ready(function(){
 						}
 					}
 				}
-				if(removed > 0) this.messages.push({'type':'warning','title':'Removed '+removed+' trailing spaces'});
+				if(removed > 0){
+					this.messages.push({'type':'warning','title':'Removed '+removed+' trailing space'+(removed==1 ? "":"s")});
+					this.changes += removed;
+				}
 			}
 		}
 
@@ -511,6 +518,7 @@ S(document).ready(function(){
 					if(add){
 						this.data.fields.title[c] = this.rules.columns[r].rename.title;
 						this.messages.push({'type':'warning','title':'Rename column &quot;<em>'+this.data.fields.name[c]+'</em>&quot; to &quot;<em>'+this.rules.columns[r].rename.title+'</em>&quot;'});
+						this.changes++;
 					}
 				}
 			}
@@ -535,8 +543,11 @@ S(document).ready(function(){
 									this.messages.push({'type':'warning','title':'Convert "<em>'+rule+'</em>" from string to date'});
 									this.data.fields.format[c] = "date";
 									tmp = convertDates(this.data,c,"date");
-									this.data = tmp.data;
-									this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
+									if(tmp.message){
+										this.data = tmp.data;
+										this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
+										this.changes += tmp.count;
+									}
 								}
 							}
 						}
@@ -557,8 +568,9 @@ S(document).ready(function(){
 		// Construct the map
 		this.buildMap();
 
+		if(this.changes > 0) this.messages.push({'type':'message','title':'Made '+this.changes+' change'+(this.changes == 1 ? "":"s")});
 		this.buildMessages();
-
+		
 		return;
 	};
 	
@@ -598,16 +610,18 @@ S(document).ready(function(){
 			}
 			if(converted > 0) message = 'Converted '+converted+' dates from American date format to ISO8601';
 		}else if(max > 1000){
-			//this.message = {'type':'warning','title':'Keeping "<em>'+rule+'</em>" as ISO date format'});
+			message = "";
 		}
-		return {'message':message,'data':data};
+		return {'message':message,'data':data,'count':converted};
 	}
 
 	CSVCleaner.prototype.buildMessages = function(){
 		var html = "";
 		var i;
 		for(i = 0; i < this.messages.length; i++){
-			html += '<li>'+this.messages[i]['type']+':'+this.messages[i].title+'</li>';
+			sym = "";
+			if(this.messages[i]['type']=="warning") sym = "⚠️";
+			html += '<li>'+sym+this.messages[i].title+'</li>';
 		}
 		if(html) html = '<ol>'+html+'</ol>';
 		S('#messages').html(html);
@@ -876,8 +890,10 @@ return this;
 		for(var c = 0; c < this.data.rows[0].length; c++){
 			if(this.data.fields.format[c]=="datetime" && this.rules.clean && this.rules.clean.isodates){
 				tmp = convertDates(this.data,c);
-				this.data = tmp.data;
-				this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
+				if(tmp.message){
+					this.data = tmp.data;
+					this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
+				}
 			}
 		}
 

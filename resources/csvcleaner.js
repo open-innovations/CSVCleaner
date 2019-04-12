@@ -303,6 +303,12 @@ S(document).ready(function(){
 		delete this.attr;
 		delete this.data;
 		delete this.records;
+		delete this.geocount;
+		delete this.layer;
+		delete this.geojson;
+		delete this.csv;
+		delete this.map;
+		delete this.file;
 		this.messages = [];
 		
 		return this;
@@ -795,40 +801,39 @@ return this;
 		if(S('#output-table').length==0){
 
 			S('#contents').html('<p id="about-table"></p><div id="output-table" class="table-holder"><table><thead></thead><tbody></tbody></table></div>');
-
-			thead += '<tr><th>Title:</th>';
-
-			for(var c in this.data.fields.name){
-				thead += '<th><input id="title-'+c+'" type="text" value="'+this.data.fields.title[c]+'" data-row="title" data-col="'+c+'" /></th>';
-				if(csvhead) csvhead += ',';
-				csvhead += this.data.fields.title[c];
-			}
-
-			thead += '</tr>';
-			thead += '<tr><th>Type:</th>';
-			for(var c in this.data.fields.name){
-				thead += '<th>'+this.buildSelect(this.data.fields.format[c],"format",c)+'</th>';
-			}
-			thead += '</tr>';
-
-			thead += '<tr><th>Keep?</th>';
-			for(var c in this.data.fields.name){
-				thead += '<th class="constraint"><label></label>'+this.buildTrueFalse(this.data.fields.required[c],"required",c)+'<!--<button class="delete" title="Remove this constraint from this column">&times;</button><button class="add" title="Add a constraint to this column">&plus;</button>--></th>';
-			}
-			thead += '</tr>';
-
-			S('#output-table thead').html(thead);
-
-			S('#contents select').on('change',{me:this},function(e,i){
-				var el = document.getElementById(e.currentTarget.id);
-				var value = el.options[el.selectedIndex].value;
-				e.data.me.update(e.currentTarget.id,value);
-			});
-			S('#contents input').on('change',{me:this},function(e,i){
-				e.data.me.update(e.currentTarget.id,e.currentTarget.value);
-			});
-
 		}
+		thead += '<tr><th>Title:</th>';
+
+		for(var c in this.data.fields.name){
+			thead += '<th><input id="title-'+c+'" type="text" value="'+this.data.fields.title[c]+'" data-row="title" data-col="'+c+'" /></th>';
+			if(csvhead) csvhead += ',';
+			csvhead += this.data.fields.title[c];
+		}
+
+		thead += '</tr>';
+		thead += '<tr><th>Type:</th>';
+		for(var c in this.data.fields.name){
+			thead += '<th>'+this.buildSelect(this.data.fields.format[c],"format",c)+'</th>';
+		}
+		thead += '</tr>';
+
+		thead += '<tr><th>Keep?</th>';
+		for(var c in this.data.fields.name){
+			thead += '<th class="constraint"><label></label>'+this.buildTrueFalse(this.data.fields.required[c],"required",c)+'<!--<button class="delete" title="Remove this constraint from this column">&times;</button><button class="add" title="Add a constraint to this column">&plus;</button>--></th>';
+		}
+		thead += '</tr>';
+
+		S('#output-table thead').html(thead);
+
+		S('#contents select').on('change',{me:this},function(e,i){
+			var el = document.getElementById(e.currentTarget.id);
+			var value = el.options[el.selectedIndex].value;
+			e.data.me.update(e.currentTarget.id,value);
+		});
+		S('#contents input').on('change',{me:this},function(e,i){
+			e.data.me.update(e.currentTarget.id,e.currentTarget.value);
+		});
+
 		
 		if(!this.geocount) this.geocount = 0;
 		S('#about-table').html("We loaded <em>"+this.records+" records</em> (only showing the first "+mx+" in the table).");

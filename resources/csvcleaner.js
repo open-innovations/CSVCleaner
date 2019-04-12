@@ -53,41 +53,19 @@ S(document).ready(function(){
 						}
 					}
 				},
-				'Liable From': {
-					'rename':{
-						'title':'Liability start date'
-					}
-				},
-				'Empty From': {
-					'rename':{
-						'title':'Empty from'
-					}
-				},
-				'Rateable Value': {
-					'rename':{
-						'title':'Rateable value'
-					}
-				},
-				'Description': {
-					'rename':{
-						'title':'VOA description'
-					}
-				},
-				'VOA Description code': {
-					'rename':{
-						'title':'VOA code'
-					}
-				},
-				'Mandaory relief': {
-					'rename':{
-						'title':'Mandatory relief'
-					}
-				},
-				'Discretionay Relief': {
-					'rename':{
-						'title':'Discretionary Relief'
-					}
-				},
+				'lat': { 'rename':{ 'title':'Latitude' } },
+				'lon': { 'rename':{ 'title':'Longitude' } },
+				'long': { 'rename':{ 'title':'Longitude' } },
+				'Liable From': { 'rename':{ 'title':'Liability start date' } },
+				'Empty From': { 'rename':{ 'title':'Empty from' } },
+				'Rateable Value': { 'rename':{ 'title':'Rateable value' } },
+				'Relief Total': { 'rename':{ 'title':'Relief total' } },
+				'Relief Mandatory': { 'rename':{ 'title':'Relief mandatory' } },
+				'Relief Discretionary': { 'rename':{ 'title':'Relief discretionary' } },
+				'Discretionay Relief': { 'rename':{ 'title':'Relief discretionary' } },
+				'Mandaory relief': { 'rename':{ 'title':'Relief mandatory' } },
+				'Description': { 'rename':{ 'title':'VOA description' } },
+				'VOA Description code': { 'rename':{ 'title':'VOA code' } },
 				'Latitude': {
 					'convert':{
 						'type': 'float',
@@ -158,7 +136,29 @@ S(document).ready(function(){
 						}
 					}
 				},
-				'Discretionary Relief': {
+				'Relief discretionary': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
+				'Relief mandatory': {
+					'convert':{
+						'type': 'float',
+						'if':{
+							'type': ['string']
+						}
+					},
+					'format': {
+						'precision': 2
+					}
+				},
+				'Relief total': {
 					'convert':{
 						'type': 'float',
 						'if':{
@@ -170,17 +170,6 @@ S(document).ready(function(){
 					}
 				},
 				'Small Business Relief': {
-					'convert':{
-						'type': 'float',
-						'if':{
-							'type': ['string']
-						}
-					},
-					'format': {
-						'precision': 2
-					}
-				},
-				'Mandatory relief': {
 					'convert':{
 						'type': 'float',
 						'if':{
@@ -881,8 +870,13 @@ return this;
 		for(var r = 0; r < this.data.rows.length; r++){
 			for(var c = 0; c < this.data.rows[r].length; c++){
 				if(c > 0) csv += ',';
-				if(this.data.fields.format[c]=="string")csv += this.data.rows[r][c].replace(/[\n\r]/g,'');
-				else csv += this.data.rows[r][c];
+				if(this.data.fields.format[c]=="string"){
+					comma = false;
+					if(this.data.rows[r][c].indexOf(",") >= 0) comma = true;
+					if(comma) csv += "\"";
+					csv += this.data.rows[r][c].replace(/[\n\r]/g,'');
+					if(comma) csv += "\"";
+				}else csv += this.data.rows[r][c];
 			}
 			csv += "\n";
 		}

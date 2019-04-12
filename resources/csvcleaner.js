@@ -13,7 +13,7 @@ S(document).ready(function(){
 
 		this.version = "1.1";
 		this.maxrowstable = 10;	// Limit on the number of rows to display
-		this.newline = "++NEWLINE++";
+		//this.newline = "++NEWLINE++";
 		this.logging = true;
 		this.log = new Logger({'id':'CSVCleaner','logging':this.logging});
 		
@@ -473,14 +473,11 @@ S(document).ready(function(){
 		// Convert the CSV to a JSON structure
 		this.data = Array2JSON(attr.data);
 
-		// Put back newlines, and tidy numbers
-		var nl = new RegExp(this.newline.replace(/\+/g,"\\\+"),"g");
-		var nl2 = "\n";
-		this.log.message(this.rules);
-		if(this.rules && this.rules.clean && this.rules.clean.escapenewlines) nl2 = "\\n";
+		
+		// Tidy numbers
+
 		for(r = 0; r < this.data.rows.length; r++){
 			for(c = 0; c < this.data.rows[r].length; c++){
-				if(this.data.fields.format[c]=="string") this.data.rows[r][c] = this.data.rows[r][c].replace(nl,"\\n");
 				if(this.data.fields.format[c]=="integer") this.data.rows[r][c] = parseInt(this.data.rows[r][c]);
 				if(this.rules && this.rules.clean && this.rules.clean.numbers && (this.data.fields.format[c]=="float" || this.data.fields.format[c]=="double")) this.data.rows[r][c] = (this.data.rows[r][c] ? parseFloat(this.data.rows[r][c]) : "");
 			}
@@ -874,7 +871,15 @@ return this;
 					comma = false;
 					if(this.data.rows[r][c].indexOf(",") >= 0) comma = true;
 					if(comma) csv += "\"";
-					csv += this.data.rows[r][c].replace(/[\n\r]/g,'');
+					if(this.rules && this.rules.clean && this.rules.clean.escapenewlines){
+						if(c==1 && r < 5){
+							console.log('before',this.data.rows[r][c]);
+							console.log('after',this.data.rows[r][c].replace(/[\n\r]+/g,'\\n'));
+						}
+						csv += this.data.rows[r][c].replace(/[\n\r]+/g,'\\n');
+					}else{
+						csv += this.data.rows[r][c];
+					}
 					if(comma) csv += "\"";
 				}else csv += this.data.rows[r][c];
 			}

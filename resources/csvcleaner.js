@@ -286,9 +286,27 @@ S(document).ready(function(){
 			e.preventDefault();
 			e.data.me.loadExample();
 		});
+		S('#reset').on('click',{me:this},function(e){
+			e.preventDefault();
+			e.data.me.reset();
+		});
 
 		return this;
 	}
+	
+	CSVCleaner.prototype.reset = function(){
+		S('#step1').css({'display':''});
+		S('#step2').css({'display':'none'});
+		S('#drop_zone').removeClass('loaded');
+		S('#filedetails').remove();
+		delete this.csv;
+		delete this.attr;
+		delete this.data;
+		delete this.records;
+		this.messages = [];
+		
+		return this;
+	};
 
 	CSVCleaner.prototype.loadExample = function(){
 		file = "https://datamillnorth.org/download/business-rates/8822678c-f472-467d-9166-48d72ffc7231/Data%20Mill%2014-01-2019.csv";
@@ -321,6 +339,9 @@ S(document).ready(function(){
 	
 	// Parse the CSV file
 	CSVCleaner.prototype.parseCSV = function(data,attr){
+
+		//S('.step1').addClass('checked');
+		S('#step1').css({'display':'none'});
 
 		this.csv = data;
 		this.attr = attr;
@@ -530,8 +551,6 @@ S(document).ready(function(){
 		// Construct the HTML table
 		this.buildTable();
 
-		//S('.step1').addClass('checked');
-		S('#step1').css({'display':'none'});
 		//S('.step2').addClass('processing');
 		S('#step2').css({'display':''});
 
@@ -915,7 +934,7 @@ return this;
 
 				this.file = f.name;
 				// ('+ (f.type || 'n/a')+ ')
-				output += '<div><strong>'+ (f.name)+ '</strong> - ' + niceSize(f.size) + ', last modified: ' + (f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a') + '</div>';
+				output += '<div id="filedetails"><strong>'+ (f.name)+ '</strong> - ' + niceSize(f.size) + ', last modified: ' + (f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a') + '</div>';
 
 				// DEPRECATED as not reliable // Only process csv files.
 				//if(!f.type.match('text/csv')) continue;

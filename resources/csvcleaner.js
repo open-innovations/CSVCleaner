@@ -24,7 +24,8 @@ S(document).ready(function(){
 				'numbers': true,	// Not implemented yet
 				'nontable': true,
 				'escapenewlines': true,
-				'emptylines': true
+				'emptylines': true,
+				'isodates': true
 			},
 			'columns': {
 				'PostCode': {
@@ -533,29 +534,9 @@ S(document).ready(function(){
 								if(this.data.fields.format[c]=="string"&& this.rules.columns[rule]['convert']['type']=="date"){
 									this.messages.push({'type':'warning','title':'Convert "<em>'+rule+'</em>" from string to date'});
 									this.data.fields.format[c] = "date";
-									var dates = [];
-									var tests = [];
-									// Try to identify date format
-									for(r = 0; r < this.data.rows.length; r++){
-										this.data.rows[r][c].replace(/^([0-9]+)[\/\-]([0-9]+)[\/\-]([0-9]+)/,function(m,p1,p2,p3){
-											dates[r] = {'a':parseInt(p1),'b':parseInt(p2),'c':parseInt(p3)};
-											tests.push(parseInt(p1));
-										});
-									}
-									max = Math.max(...tests);
-									if(max > 12 && max <= 31){
-										this.messages.push({'type':'warning','title':'Converting "<em>'+rule+'</em>" from British date format to ISO'});
-										for(r = 0; r < this.data.rows.length; r++){
-											if(this.data.rows[r][c]) this.data.rows[r][c] = dates[r].c+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a;
-										}
-									}else if(max <= 12){
-										this.messages.push({'type':'warning','title':'Converting "<em>'+rule+'</em>" from American date format to ISO'});
-										for(r = 0; r < this.data.rows.length; r++){
-											if(this.data.rows[r][c]) this.data.rows[r][c] = dates[r].c+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b;
-										}
-									}else if(max > 1000){
-										this.messages.push({'type':'warning','title':'Keeping "<em>'+rule+'</em>" as ISO date format'});
-									}
+									tmp = convertDates(this.data,c,"date");
+									this.data = tmp.data;
+									this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
 								}
 							}
 						}
@@ -581,6 +562,47 @@ S(document).ready(function(){
 		return;
 	};
 	
+	function convertDates(data,c,typ){
+		var r,max;
+		var dates = [];
+		var tests = [];
+		var message = "";
+		if(!typ) typ = "datetime";
+		// Try to identify date format
+		for(r = 0; r < data.rows.length; r++){
+			data.rows[r][c].replace(/^([0-9]+)[\/\-]([0-9]+)[\/\-]([0-9]+)(.*)/,function(m,p1,p2,p3,p4){
+				dates[r] = {'a':parseInt(p1),'b':parseInt(p2),'c':parseInt(p3),'t':p4};
+				tests.push(parseInt(p1));
+			});
+		}
+		max = Math.max(...tests);
+		var converted = 0;
+		if(max > 12 && max <= 31){
+			for(r = 0; r < data.rows.length; r++){
+				if(data.rows[r][c]){
+					data.rows[r][c] = dates[r].c+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a;
+					if(typ=="datetime" && dates[r].t){
+						dates[r].h = 0;
+						dates[r].m = 0;
+						dates[r].s = 0;
+						dates[r].t.replace(/([0-9]{1,2})[^0-9]+([0-9]{2})[^0-9]+([0-9]{2}?)/,function(m,p1,p2,p3){ dates[r].h = parseInt(p1); dates[r].m = parseInt(p2); dates[r].s = parseInt(p3); });
+						data.rows[r][c] += 'T'+(dates[r].h < 10 ?"0":"")+dates[r].h+':'+(dates[r].m < 10 ?"0":"")+dates[r].m+(dates[r].s ? ':'+(dates[r].s < 10 ?"0":"")+dates[r].s:'');
+					}
+					converted++;
+				}
+			}
+			if(converted > 0) message = 'Converted '+converted+' dates from British date format to ISO8601';
+		}else if(max <= 12){
+			for(r = 0; r < data.rows.length; r++){
+				if(data.rows[r][c]) data.rows[r][c] = dates[r].c+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b;
+			}
+			if(converted > 0) message = 'Converted '+converted+' dates from American date format to ISO8601';
+		}else if(max > 1000){
+			//this.message = {'type':'warning','title':'Keeping "<em>'+rule+'</em>" as ISO date format'});
+		}
+		return {'message':message,'data':data};
+	}
+
 	CSVCleaner.prototype.buildMessages = function(){
 		var html = "";
 		var i;
@@ -850,12 +872,24 @@ return this;
 		if(!this.geocount) this.geocount = 0;
 		S('#about-table').html("We loaded <em>"+this.records+" records</em> (only showing the first "+mx+" in the table).");
 
+		// Convert dates to ISO format
+		for(var c = 0; c < this.data.rows[0].length; c++){
+			if(this.data.fields.format[c]=="datetime" && this.rules.clean && this.rules.clean.isodates){
+				tmp = convertDates(this.data,c);
+				this.data = tmp.data;
+				this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
+			}
+		}
 
+
+		// Build example table
 		if(!this.data.geo) this.data.geo = [];
 		for(var i = 0; i < mx; i++){
 			tbody += '<tr><td class="rn">'+(i+1)+'</td>';
 			for(var c = 0; c < this.data.rows[i].length; c++){
-				tbody += '<td '+(this.data.fields.format[c] == "float" || this.data.fields.format[c] == "integer" || this.data.fields.format[c] == "year" || this.data.fields.format[c] == "date" || this.data.fields.format[c] == "datetime" ? ' class="n"' : '')+'>'+(typeof this.data.rows[i][c]==="string" ? this.data.rows[i][c]:this.data.rows[i][c])+'</td>';
+				tbody += '<td '+(this.data.fields.format[c] == "float" || this.data.fields.format[c] == "integer" || this.data.fields.format[c] == "year" || this.data.fields.format[c] == "date" || this.data.fields.format[c] == "datetime" ? ' class="n"' : '')+'>';
+				tbody += (typeof this.data.rows[i][c]==="string" ? this.data.rows[i][c]:this.data.rows[i][c]);
+				tbody += '</td>';
 			}
 			tbody += '</tr>';
 		}
@@ -873,7 +907,9 @@ return this;
 					if(this.rules && this.rules.clean && this.rules.clean.escapenewlines) csv += this.data.rows[r][c].replace(/[\n\r]+/g,'\\n');
 					else csv += this.data.rows[r][c];
 					if(comma) csv += "\"";
-				}else csv += this.data.rows[r][c];
+				}else{
+					csv += this.data.rows[r][c];
+				}
 			}
 			csv += "\n";
 		}
@@ -1050,7 +1086,7 @@ return this;
 		var formats = new Array();
 		var req = new Array();
 		var start = 1;
-		var r,c;
+		var r,c,isdate;
 		header = data[0];
 
 		for(r = 0, rows = 0 ; r < data.length; r++){
@@ -1064,6 +1100,9 @@ return this;
 				// Remove any quotes around the column value
 				datum[c] = data[r][c].replace(/^\"(.*)\"$/,function(m,p1){ return p1; });
 
+				isdate = false;
+				if(datum[c].search(/[0-9]{2}[\/\- ][0-9]{2}[\/\- ][0-9]{4}/) >= 0) isdate = true;
+				if(!isNaN(Date.parse(datum[c]))) isdate = true;
 				// If the value parses as a float
 				if(typeof parseFloat(datum[c])==="number" && parseFloat(datum[c]) == datum[c]){
 					types[c] = "float";
@@ -1079,7 +1118,7 @@ return this;
 				}else if(datum[c].search(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)/) >= 0){
 					// The value looks like a URL
 					types[c] = "URL";
-				}else if(!isNaN(Date.parse(datum[c]))){
+				}else if(isdate){
 					// The value parses as a date
 					types[c] = "datetime";
 				}else{

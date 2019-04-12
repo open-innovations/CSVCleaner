@@ -13,7 +13,6 @@ S(document).ready(function(){
 
 		this.version = "1.1";
 		this.maxrowstable = 10;	// Limit on the number of rows to display
-		//this.newline = "++NEWLINE++";
 		this.logging = true;
 		this.log = new Logger({'id':'CSVCleaner','logging':this.logging});
 		
@@ -871,15 +870,8 @@ return this;
 					comma = false;
 					if(this.data.rows[r][c].indexOf(",") >= 0) comma = true;
 					if(comma) csv += "\"";
-					if(this.rules && this.rules.clean && this.rules.clean.escapenewlines){
-						if(c==1 && r < 5){
-							console.log('before',this.data.rows[r][c]);
-							console.log('after',this.data.rows[r][c].replace(/[\n\r]+/g,'\\n'));
-						}
-						csv += this.data.rows[r][c].replace(/[\n\r]+/g,'\\n');
-					}else{
-						csv += this.data.rows[r][c];
-					}
+					if(this.rules && this.rules.clean && this.rules.clean.escapenewlines) csv += this.data.rows[r][c].replace(/[\n\r]+/g,'\\n');
+					else csv += this.data.rows[r][c];
 					if(comma) csv += "\"";
 				}else csv += this.data.rows[r][c];
 			}

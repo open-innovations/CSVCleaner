@@ -555,7 +555,7 @@ S(document).ready(function(){
 									tmp = convertDates(this.data,c,"date");
 									if(tmp.message){
 										this.data = tmp.data;
-										this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
+										this.messages.push({'type':'warning','title':tmp.message+' in <em>'+this.data.fields.title[c]+'</em>'});
 										this.changes += tmp.count;
 									}
 								}
@@ -902,7 +902,7 @@ return this;
 				tmp = convertDates(this.data,c);
 				if(tmp.message){
 					this.data = tmp.data;
-					this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
+					this.messages.push({'type':'warning','title':tmp.message+' in <em>'+this.data.fields.title[c]+'</em>'});
 					this.changes += tmp.count;
 				}
 			}

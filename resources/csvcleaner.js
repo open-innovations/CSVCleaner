@@ -364,6 +364,7 @@ S(document).ready(function(){
 
 		this.csv = data;
 		this.attr = attr;
+		
 		// Look for dodgy header/footer sections
 		if(this.rules.clean){
 			var r,c,newdata,startrow,maxcols,minempty,empty,emptyend,badend;
@@ -375,6 +376,14 @@ S(document).ready(function(){
 			for(c = 0; c < cols.length; c++){
 				if(!cols[c]) cols[c] = 0;
 			}
+			
+			// Fix undefined values
+			for(r = 0; r < attr.data.length; r++){
+				for(c = 0; c < attr.data[r].length; c++){
+					if(typeof attr.data[r][c]==="undefined") attr.data[r][c] = "";
+				}
+			}
+			
 			maxcols = cols.indexOf(Math.max(...cols));
 			
 			if(this.rules.clean.trailingcolumns){
@@ -438,7 +447,7 @@ S(document).ready(function(){
 					this.changes += endrow;
 				}
 			}
-			
+
 			if(this.rules.clean.emptylines){
 				var emptylines = 0;
 				// Of the rows we have left, remove rows that are entirely empty
@@ -463,10 +472,12 @@ S(document).ready(function(){
 				removed = 0;
 				for(r = attr.data.length-1; r >= 0; r--){
 					for(c = 0; c < attr.data[r].length; c++){
-						txt = attr.data[r][c].replace(/\s+$/,"");
-						if(txt != attr.data[r][c]){
-							removed++;
-							attr.data[r][c] = txt;
+						if(typeof attr.data[r][c]!=="undefined"){
+							txt = attr.data[r][c].replace(/\s+$/,"");
+							if(txt != attr.data[r][c]){
+								removed++;
+								attr.data[r][c] = txt;
+							}
 						}
 					}
 				}
@@ -479,7 +490,6 @@ S(document).ready(function(){
 
 		// Convert the CSV to a JSON structure
 		this.data = Array2JSON(attr.data);
-
 		
 		// Tidy numbers
 
@@ -893,6 +903,7 @@ return this;
 				if(tmp.message){
 					this.data = tmp.data;
 					this.messages.push({'type':'warning','title':tmp.message+' in '+this.data.fields.title[c]});
+					this.changes += tmp.count;
 				}
 			}
 		}

@@ -71,6 +71,8 @@ S(document).ready(function(){
 				'Mandaory relief': { 'rename':{ 'title':'Relief mandatory' } },
 				'Description': { 'rename':{ 'title':'VOA description' } },
 				'VOA Description code': { 'rename':{ 'title':'VOA code' } },
+				'PropertyAddress': { 'rename':{ 'title':'Address' } },
+				'LiableName': { 'rename':{ 'title':'Ratepayer' } },
 				'Latitude': {
 					'convert':{
 						'type': 'float',

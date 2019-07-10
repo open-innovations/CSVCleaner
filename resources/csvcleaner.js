@@ -603,7 +603,7 @@ S(document).ready(function(){
 		var converted = 0;
 		if(max > 12 && max <= 31){
 			for(r = 0; r < data.rows.length; r++){
-				if(data.rows[r][c]){
+				if(data.rows[r][c] && dates[r]){
 					data.rows[r][c] = dates[r].c+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a;
 					if(typ=="datetime" && dates[r].t){
 						dates[r].h = 0;
@@ -618,7 +618,7 @@ S(document).ready(function(){
 			if(converted > 0) message = 'Converted '+converted+' dates from British date format to ISO8601';
 		}else if(max <= 12){
 			for(r = 0; r < data.rows.length; r++){
-				if(data.rows[r][c]) data.rows[r][c] = dates[r].c+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b;
+				if(data.rows[r][c] && dates[r]) data.rows[r][c] = dates[r].c+'-'+(dates[r].a < 10 ?"0":"")+dates[r].a+'-'+(dates[r].b < 10 ?"0":"")+dates[r].b;
 			}
 			if(converted > 0) message = 'Converted '+converted+' dates from American date format to ISO8601';
 		}else if(max > 1000){

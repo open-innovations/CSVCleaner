@@ -63,9 +63,10 @@ S(document).ready(function(){
 				'long': { 'rename':{ 'title':'Longitude' } },
 				'Occupied ?': { 'rename':{ 'title':'Occupied' } },
 				'Liability Start': { 'rename':{ 'title':'Liability start date' } },
+				'Liability Start Date': { 'rename':{ 'title':'Liability start date' } },
 				'Liable From': { 'rename':{ 'title':'Liability start date' } },
-				'Empty Rates Start Date': { 'rename':{ 'title':'Empty from' } },
 				'Empty From': { 'rename':{ 'title':'Empty from' } },
+				'Empty Rates Start Date': { 'rename':{ 'title':'Empty from' } },
 				'Rateable Value': { 'rename':{ 'title':'Rateable value' } },
 				'Rv': { 'rename':{ 'title':'Rateable value' } },
 				'Relief Total': { 'rename':{ 'title':'Relief total' } },
@@ -75,10 +76,15 @@ S(document).ready(function(){
 				'Mandaory relief': { 'rename':{ 'title':'Relief mandatory' } },
 				'Property Description': { 'rename':{ 'title':'VOA description' } },
 				'Description': { 'rename':{ 'title':'VOA description' } },
+				'VOA Description': { 'rename':{ 'title':'VOA description' } },
+				'VOA Code': { 'rename':{ 'title':'VOA code' } },
 				'VOA Description code': { 'rename':{ 'title':'VOA code' } },
 				'PropertyAddress': { 'rename':{ 'title':'Address' } },
 				'Property Address': { 'rename':{ 'title':'Address' } },
+				'B A Reference Number': { 'rename':{ 'title':'BA reference number' } },
+				'Property Reference Number': { 'rename':{ 'title':'Property reference number' } },
 				'Propref': { 'rename':{ 'title':'Property reference number' } },
+				'Exemption Start Date': { 'rename':{ 'title':'Exemptions start date' } },
 				'LiableName': { 'rename':{ 'title':'Ratepayer' } },
 				'Latitude': {
 					'convert':{
@@ -142,7 +148,7 @@ S(document).ready(function(){
 						}
 					}
 				},
-				'Empty From': {
+				'Empty from': {
 					'convert':{
 						'type': 'date',
 						'if':{
@@ -525,6 +531,7 @@ S(document).ready(function(){
 		for(c = 0 ; c < this.data.fields.name.length; c++){
 			// Loop over the column rules to convert headings
 			for(r in this.rules.columns){
+			console.log(r,this.rules.columns[r].rename);
 				if(this.rules.columns[r].rename && r==this.data.fields.name[c]){
 					add = false;
 					if(this.rules.columns[r]['if']){

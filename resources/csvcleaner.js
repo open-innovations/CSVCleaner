@@ -21,7 +21,7 @@ S(document).ready(function(){
 	// Main function
 	function CSVCleaner(file){
 
-		this.version = "1.1";
+		this.version = "1.2";
 		this.maxrowstable = 10;	// Limit on the number of rows to display
 		this.logging = true;
 		this.log = new Logger({'id':'CSVCleaner','logging':this.logging});

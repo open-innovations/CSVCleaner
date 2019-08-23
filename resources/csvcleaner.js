@@ -541,7 +541,7 @@ S(document).ready(function(){
 		for(c = 0 ; c < this.data.fields.name.length; c++){
 			// Loop over the column rules to convert headings
 			for(r in this.rules.columns){
-			console.log(r,this.rules.columns[r].rename);
+			//console.log(r,this.rules.columns[r].rename);
 				if(this.rules.columns[r].rename && r==this.data.fields.name[c]){
 					add = false;
 					if(this.rules.columns[r]['if']){
@@ -618,7 +618,7 @@ S(document).ready(function(){
 		if(!typ) typ = "datetime";
 		// Try to identify date format
 		for(r = 0; r < data.rows.length; r++){
-			data.rows[r][c].replace(/^([0-9]+)[\/\-]([0-9]+)[\/\-]([0-9]+)(.*)/,function(m,p1,p2,p3,p4){
+			data.rows[r][c].replace(/^([0-9]+)[\/\-\.]([0-9]+)[\/\-\.]([0-9]+)(.*)/,function(m,p1,p2,p3,p4){
 				dates[r] = {'a':parseInt(p1),'b':parseInt(p2),'c':parseInt(p3),'t':p4};
 				tests.push(parseInt(p1));
 			});
@@ -1154,7 +1154,7 @@ return this;
 				datum[c] = data[r][c].replace(/^\"(.*)\"$/,function(m,p1){ return p1; });
 
 				isdate = false;
-				if(datum[c].search(/[0-9]{2}[\/\- ][0-9]{2}[\/\- ][0-9]{4}/) >= 0) isdate = true;
+				if(datum[c].search(/[0-9]{2}[\/\- \.][0-9]{2}[\/\- \.][0-9]{4}/) >= 0) isdate = true;
 				if(!isNaN(Date.parse(datum[c]))) isdate = true;
 				// If the value parses as a float
 				if(typeof parseFloat(datum[c])==="number" && parseFloat(datum[c]) == datum[c]){

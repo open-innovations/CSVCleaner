@@ -73,6 +73,7 @@ S(document).ready(function(){
 				'long': { 'rename':{ 'title':'Longitude' } },
 				'Occupied ?': { 'rename':{ 'title':'Occupied' } },
 				'Liability Start': { 'rename':{ 'title':'Liability start date' } },
+				'Liability Start date': { 'rename':{ 'title':'Liability start date' } },
 				'Liability Start Date': { 'rename':{ 'title':'Liability start date' } },
 				'Liable From': { 'rename':{ 'title':'Liability start date' } },
 				'Empty From': { 'rename':{ 'title':'Empty from' } },
